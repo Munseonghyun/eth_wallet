@@ -1,0 +1,80 @@
+<!Doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript" src="./lib/bignumber.min.js"></script>
+<script type="text/javascript" src="./lib/web3-light.js"></script>
+<script type="text/javascript">
+
+	const Web3 = require('web3');
+    const web3 = new Web3();
+    web3.setProvider(new web3.providers.HttpProvider("http://localhost:8545"));
+
+	function refreshBalance() { 
+		document.getElementById("tablePlace").innerText = " ";
+		const idiv = document.createElement('div');
+		document.getElementById("tablePlace").appendChild(idiv);
+		const list = web3.eth.accounts;
+		let total = 0;
+		let input ="<table>";
+		input += "<tr><td>" + "Account" + "</td><td>" + "ETH</td></tr>";
+		for(let i = 0; i<list.length; i++){
+			let tempB= parseFloat(web3.fromWei(web3.eth.getBalance(list[i]),"ether"));
+			console.log('Account:('+tempB+')');
+			input +="<tr><td>"+ list[i] + "</td><td>" + tempB +" ETHER</td></tr>";
+			total+=tempB;
+		}
+		input +="<tr><td><strong> TOTAL </strong></td><td><strong><font color='red'>" + total +" ETHER</font></strong></td></tr></table>";
+		idiv.innerHTML = input;	
+		web3.eth.filter('latest').watch(function() { refreshBalance();});
+	}
+	function makeSelect() { 
+		const list = web3.eth.accounts;
+		let select =  document.getElementById('accounts');
+		for(let i = 0; i<list.length; i++){
+			let opt=document.createElement('option');
+			opt.value = list[i];
+			opt.innerHTML = list[i];
+			select.appendChild(opt);
+		}
+	}
+	function send(){
+		let address = document.getElementById('accounts').value;
+		let toAddress = document.getElementById('toAccount').value;
+		let amount = web3.toWei(document.getElementById('amount').value,"ether");
+		if(web3.personal.unlockAccount(address,document.getElementById('pass').value)){
+			web3.eth.sendTransaction({from:address, to:toAddress, value:amount},function(err,result){
+				if(!err){
+					window.alert("transaction: " +result+ " 성공!");
+				}
+				else
+				{
+					window.alert("실패!");
+					console.log(err);
+				}
+			});
+		}
+
+
+	}
+	
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<h1>Eth Wallet</h1>
+	<div id="tablePlace"></div>
+		<h4>송신계좌 : <select id="accounts" style="width:300px">
+		<option value="" selected disabled hidden>계좌를 선택하세요</option></select></h4>
+		<h4>수신계좌 : <input type="text" id="toAccount" style="width:300px"></h4>
+		<h4>전송금액 : <input type="number" id="amount" style="width:300px"></h4>
+		<h4>비밀번호 : <input type="password" id="pass" style="width:300px"></h4>
+		<button onclick="javascript:send()">보내기</button>
+		
+	<script>
+		refreshBalance();
+		makeSelect();
+	</script>
+
+</body>
+</html>
